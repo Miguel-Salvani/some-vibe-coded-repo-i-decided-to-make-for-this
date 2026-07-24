@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pantry Roulette</title>
+    <style>
+        :root {
+            --bg-color: #fcf9f2;
+            --card-bg: #ffffff;
+            --border-color: #e8e3d9;
+            --accent-orange: #d94814;
+            --accent-orange-hover: #b83a0e;
+            --tag-bg: #f5f2eb;
+            --tag-selected-bg: #2d2b2a;
+            --tag-selected-text: #ffffff;
+            --text-dark: #2d2b2a;
+            --text-muted: #736f68;
+            --warn-bg: #fdf1e0;
+            --warn-border: #f0d8a8;
+            --warn-text: #7a5a12;
+            --nutri-bg: #eef4ea;
+            --restrict-tag-bg: #fbe7d8;
+            --restrict-tag-text: #8a3d0d;
+            --good-bg: #e2f0d9;
+            --good-text: #2d5a1e;
+            --bad-bg: #fbe0e0;
+            --bad-text: #8a2d2d;
+        }
+
+        html[data-theme="dark"] {
+            --bg-color: #1a1816;
+            --card-bg: #242220;
+            --border-color: #3a3733;
+            --accent-orange: #e8763f;
+            --accent-orange-hover: #f28c5a;
+            --tag-bg: #2d2b28;
+            --tag-selected-bg: #f0ebe1;
+            --tag-selected-text: #1a1816;
+            --text-dark: #f0ece4;
+            --text-muted: #a49d92;
+            --warn-bg: #3a2f18;
+            --warn-border: #5c4a1e;
+            --warn-text: #e8c880;
+            --nutri-bg: #223224;
+            --restrict-tag-bg: #4a2e18;
+            --restrict-tag-text: #f0b988;
+            --good-bg: #2a3d24;
+            --good-text: #b3e29b;
+            --bad-bg: #3d2424;
+            --bad-text: #e2a3a3;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 24px;
+            min-height: 100vh;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            max-width: 1100px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .logo-icon {
+            background-color: var(--accent-orange);
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .header h1 { font-size: 18px; margin: 0; font-weight: 700; }
+        .header p { margin: 0; font-size: 12px; color: var(--text-muted); }
+
+        .theme-toggle {
+            margin-left: auto;
+            background: var(--tag-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .theme-toggle:hover { border-color: var(--accent-orange); }
+
+        .warning-banner {
+            max-width: 1100px;
+            margin: 0 auto 20px auto;
+            background: var(--warn-bg);
+            border: 1px solid var(--warn-border);
+            color: var(--warn-text);
+            border-radius: 10px;
+            padding: 10px 16px;
+            font-size: 12.5px;
+            line-height: 1.5;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+        .warning-banner .icon { font-size: 16px; flex-shrink: 0; }
+        .warning-banner .warn-text { flex: 1; }
+        .warning-close {
+            background: none;
+            border: none;
+            color: var(--warn-text);
+            font-size: 16px;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0 2px;
+            flex-shrink: 0;
+        }
+        .warning-close:hover { opacity: 0.7; }
+
+        .app-layout {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 20px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 900px) {
+            .app-layout { grid-template-columns: 1fr; }
+        }
+
+        .panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 18px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: var(--text-dark);
+            margin: 0 0 4px 0;
+            text-transform: uppercase;
+        }
+
+        .section-sub { font-size: 12.5px; color: var(--text-muted); margin: 0 0 12px 0; }
+
+        .input-group { display: flex; gap: 8px; margin-bottom: 10px; }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--card-bg);
+            font-size: 14px;
+            color: var(--text-dark);
+            outline: none;
+        }
+        input[type="text"]:focus, select:focus { border-color: var(--accent-orange); }
+
+        .btn-add {
+            background: var(--tag-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0 16px;
+            font-size: 18px;
+            cursor: pointer;
+            color: var(--text-dark);
+        }
+        .btn-add:hover { border-color: var(--accent-orange); }
+
+        .ingredient-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+
+        .ing-tag {
+            background: var(--good-bg);
+            color: var(--good-text);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .restrict-tag {
+            background: var(--restrict-tag-bg);
+            color: var(--restrict-tag-text);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ing-tag span, .restrict-tag span { cursor: pointer; }
+
+        .divider { border: 0; border-top: 1px solid var(--border-color); margin: 16px 0; }
+
+        .group-label { font-size: 12px; color: var(--text-muted); margin: 0 0 6px 0; }
+
+        .cuisine-hint { font-size: 11px; color: var(--text-muted); margin: -6px 0 12px 0; }
+
+        .tag-cloud { display: flex; flex-wrap: wrap; gap: 6px; }
+
+        .chip {
+            background: var(--tag-bg);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            color: var(--text-dark);
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s ease;
+        }
+        .chip:hover { border-color: #b0aaa0; }
+        .chip.active {
+            background: var(--tag-selected-bg);
+            color: var(--tag-selected-text);
+            border-color: var(--tag-selected-bg);
+        }
+
+        .btn-spin {
+            background: var(--accent-orange);
+            color: white;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-spin:hover { background: var(--accent-orange-hover); }
+
+        .btn-nearby {
+            background: transparent;
+            color: var(--text-dark);
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .btn-nearby:hover { background: var(--tag-bg); }
+
+        .display-panel {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            min-height: 460px;
+        }
+
+        .placeholder-icon {
+            background: var(--good-bg);
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-bottom: 16px;
+        }
+
+        .display-panel h2 { font-size: 19px; margin: 0 0 8px 0; }
+        .display-panel p.sub { font-size: 13px; color: var(--text-muted); max-width: 320px; line-height: 1.5; margin: 0; }
+
+        .recipe-content { text-align: left; width: 100%; }
+
+        .recipe-header {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 14px;
+            margin-bottom: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .recipe-header-main { flex: 1; min-width: 0; }
+        .recipe-header h3 { font-size: 22px; margin: 0 0 8px 0; }
+
+        .btn-roll-again {
+            background: var(--tag-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 7px 14px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-dark);
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .btn-roll-again:hover { border-color: var(--accent-orange); color: var(--accent-orange); }
+
+        .recipe-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        .meta-badge {
+            background: var(--tag-bg);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .recipe-body h4 { margin: 14px 0 8px 0; font-size: 14.5px; }
+        .recipe-body ul, .recipe-body ol { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.6; color: var(--text-dark); }
+
+        .nutrition-box {
+            background: var(--nutri-bg);
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-top: 14px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            text-align: center;
+        }
+        .nutrition-box .num { font-size: 15px; font-weight: 700; display: block; }
+        .nutrition-box .lbl { font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; }
+
+        .inline-note { font-size: 11.5px; color: var(--text-muted); margin-top: 10px; line-height: 1.4; }
+
+        /* Rating box */
+        .rating-box {
+            margin-top: 18px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 14px;
+        }
+        .rating-question { font-size: 13px; font-weight: 600; margin: 0 0 8px 0; }
+        .rating-buttons { display: flex; gap: 8px; }
+        .rate-btn {
+            background: var(--tag-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark);
+            cursor: pointer;
+        }
+        .rate-btn:hover { border-color: var(--accent-orange); }
+        .rate-btn.active[data-rating="up"] { background: var(--good-bg); color: var(--good-text); border-color: var(--good-text); }
+        .rate-btn.active[data-rating="down"] { background: var(--bad-bg); color: var(--bad-text); border-color: var(--bad-text); }
+
+        .rating-feedback { margin-top: 10px; }
+        .rating-feedback textarea {
+            width: 100%;
+            min-height: 64px;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--card-bg);
+            color: var(--text-dark);
+            font-size: 13px;
+            font-family: inherit;
+            resize: vertical;
+            outline: none;
+        }
+        .rating-feedback textarea:focus { border-color: var(--accent-orange); }
+        .btn-feedback-submit {
+            margin-top: 8px;
+            background: var(--accent-orange);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-feedback-submit:hover { background: var(--accent-orange-hover); }
+        .rating-thanks { font-size: 13px; color: var(--good-text); font-weight: 600; margin-top: 8px; }
+
+        .nearby-list { width: 100%; text-align: left; }
+        .place-card {
+            background: var(--tag-bg);
+            border: 1px solid var(--border-color);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Footer */
+        .footer {
+            max-width: 1100px;
+            margin: 28px auto 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 0;
+        }
+        .footer-link {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 4px 6px;
+        }
+        .footer-link:hover { color: var(--accent-orange); }
+        .footer-dot { color: var(--text-muted); font-size: 12px; }
+
+        /* Modals */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 50;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 480px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .modal-header h3 { margin: 0; font-size: 17px; }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            line-height: 1;
+            cursor: pointer;
+            color: var(--text-muted);
+            padding: 0 4px;
+        }
+        .modal-close:hover { color: var(--accent-orange); }
+        .modal-body { font-size: 13px; line-height: 1.65; color: var(--text-dark); }
+        .modal-body h4 { font-size: 13px; margin: 14px 0 4px 0; }
+        .modal-body h4:first-child { margin-top: 0; }
+        .modal-body ol, .modal-body ul { padding-left: 20px; margin: 6px 0; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo-icon">🍳</div>
+        <div>
+            <h1>Pantry Roulette</h1>
+            <p>Quick, cheap recipes from what you already have.</p>
+        </div>
+        <button class="theme-toggle" id="themeToggle">🌙 Dark</button>
+    </div>
+
+    <div class="warning-banner" id="warningBanner">
+        <span class="icon">⚠️</span>
+        <span class="warn-text">These recipes are generated by AI and can be wrong sometimes — double-check ingredients yourself before cooking, especially if you're relying on this for an allergy or a religious dietary rule.</span>
+        <button class="warning-close" id="warningClose" title="Dismiss">&times;</button>
+    </div>
+
+    <div class="app-layout">
+        <div class="panel">
+            <div class="section-title">In Your Kitchen</div>
+            <div class="section-sub">Add what you've got. Leave empty to gamble entirely.</div>
+
+            <div class="input-group">
+                <input type="text" id="ingInput" placeholder="e.g. chicken thighs, garlic, lime...">
+                <button class="btn-add" id="addIngBtn">+</button>
+            </div>
+            <div class="ingredient-tags" id="ingList"></div>
+
+            <div class="section-title">Dietary &amp; Religious Needs</div>
+            <div class="section-sub">Type any restrictions — vegetarian, halal, kosher, gluten-free, nut allergy, no pork, dairy-free, whatever applies.</div>
+
+            <div class="input-group">
+                <input type="text" id="restrictInput" placeholder="e.g. halal, nut allergy, vegetarian...">
+                <button class="btn-add" id="addRestrictBtn">+</button>
+            </div>
+            <div class="ingredient-tags" id="restrictList"></div>
+
+            <hr class="divider">
+
+            <div class="group-label">Cuisine</div>
+            <input type="text" id="cuisineInput" list="cuisineOptions" placeholder="Search or type a cuisine (leave blank for any)...">
+            <datalist id="cuisineOptions">
+                <option value="American">
+                <option value="BBQ & Southern">
+                <option value="Brazilian">
+                <option value="Cajun & Creole">
+                <option value="Caribbean">
+                <option value="Chinese">
+                <option value="Ethiopian">
+                <option value="Filipino">
+                <option value="French">
+                <option value="German">
+                <option value="Greek">
+                <option value="Indian">
+                <option value="Italian">
+                <option value="Japanese">
+                <option value="Korean">
+                <option value="Mediterranean">
+                <option value="Mexican">
+                <option value="Middle Eastern">
+                <option value="Moroccan">
+                <option value="Peruvian">
+                <option value="Spanish">
+                <option value="Thai">
+                <option value="Vietnamese">
+            </datalist>
+            <p class="cuisine-hint">Start typing to search, or leave blank to let it surprise you.</p>
+
+            <div class="group-label">Vibe (pick any, or none)</div>
+            <div class="tag-cloud">
+                <span class="chip" onclick="toggleChip(this)">quick</span>
+                <span class="chip" onclick="toggleChip(this)">budget-friendly</span>
+                <span class="chip" onclick="toggleChip(this)">one-pan</span>
+                <span class="chip" onclick="toggleChip(this)">no-cook</span>
+                <span class="chip" onclick="toggleChip(this)">meal prep</span>
+                <span class="chip" onclick="toggleChip(this)">comfort</span>
+                <span class="chip" onclick="toggleChip(this)">snack</span>
+                <span class="chip" onclick="toggleChip(this)">breakfast</span>
+                <span class="chip" onclick="toggleChip(this)">dessert</span>
+            </div>
+
+            <button class="btn-spin" id="spinBtn">🎲 Spin me a recipe</button>
+            <button class="btn-nearby" id="findNearbyBtn">📍 Find cheap eats nearby</button>
+        </div>
+
+        <div class="panel display-panel" id="displayPanel">
+            <div class="placeholder-icon">✨</div>
+            <h2>Your next meal, one spin away.</h2>
+            <p class="sub">Add ingredients, note any dietary needs, then hit spin. Every recipe here takes 45 minutes or less.</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        <button class="footer-link" id="helpBtn">❓ Help</button>
+        <span class="footer-dot">•</span>
+        <button class="footer-link" id="termsBtn">📄 Terms of Service</button>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal-overlay" id="helpModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>How Pantry Roulette works</h3>
+                <button class="modal-close" data-close="helpModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h4>1. Add what you have</h4>
+                <p>Type ingredients one at a time. Leave it empty if you want a totally random result.</p>
+                <p>On top of this, you can press the plus (+) button to include an ingredient typed by you.</p>
+                <h4>2. Note any restrictions</h4>
+                <p>Type things like "halal," "vegan," "nut allergy," or "gluten-free" — the recipe you get back will try to respect those.</p>
+                <p>As step 1 mentions, you can press the plus (+) button to include a restriction typed by you.</p>
+                <h4>3. Pick a cuisine and vibe (optional)</h4>
+                <p>Search or type a cuisine, and tap any vibe chips that fit — quick, budget-friendly, one-pan, and so on.</p>
+                <h4>4. Spin</h4>
+                <p>Hit "Spin me a recipe." Every result takes 45 minutes or less to make. Not feeling it? Tap "Roll again" in the corner of the recipe card for a new one.</p>
+                <h4>5. Rate it!</h4>
+                <p>Let us know if you liked what you got, and leave a quick note on what worked or what to change.</p>
+                <p style="margin-top:14px; color: var(--text-muted);">Remember: recipes are AI-generated and may not always be accurate — always double-check against your own needs before cooking.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terms of Service Modal -->
+    <div class="modal-overlay" id="termsModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Terms of Service</h3>
+                <button class="modal-close" data-close="termsModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h4>About this tool</h4>
+                <p>Pantry Roulette suggests recipes based on the ingredients, restrictions, and preferences you enter. It's meant as a starting point for meal ideas, not professional culinary or nutrition guidance.</p>
+                <h4>AI-generated content</h4>
+                <p>Recipes, prep times, and nutrition figures are generated automatically and can be inaccurate or incomplete. Always verify ingredients, quantities, and cooking steps yourself before preparing or eating a dish.</p>
+                <h4>Dietary and allergy disclaimer</h4>
+                <p>Typed dietary or religious restrictions are used as a best-effort filter, not a guarantee. Pantry Roulette is not a substitute for checking ingredient labels or consulting a qualified professional about allergies, medical dietary needs, or religious dietary law.</p>
+                <h4>Location data</h4>
+                <p>The "Find cheap eats nearby" feature uses your browser's location, with your permission, to query OpenStreetMap. Location data is used only to run that search and isn't stored by this tool.</p>
+                <h4>No warranty</h4>
+                <p>This tool is provided as-is, with no guarantee of accuracy, availability, or fitness for a particular purpose.</p>
+                <h4>Changes</h4>
+                <p>These terms may be updated as the tool changes. Continued use after an update means you accept the current version.</p>
+                <h4>Quick Note:</h4>
+                <p>One of the fellow teammates here, thanks for looking at this! Seeing people actually observing this demo is really, really cool! And, one final thing before I go: Adding this wasn't very clam-plicated!</p>
+                <h4>😀 - Our Team - 😀</h4>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ---------- Theme (dark by default) ---------- */
+        const themeToggle = document.getElementById('themeToggle');
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            themeToggle.innerHTML = theme === 'dark' ? '🌙 Dark' : '☀️ Light';
+            localStorage.setItem('pantryRouletteTheme', theme);
+        }
+        const savedTheme = localStorage.getItem('pantryRouletteTheme') || 'dark';
+        applyTheme(savedTheme);
+        themeToggle.addEventListener('click', () => {
+            const current = document.documentElement.getAttribute('data-theme');
+            applyTheme(current === 'dark' ? 'light' : 'dark');
+        });
+
+        /* ---------- Warning banner dismiss ---------- */
+        const warningBanner = document.getElementById('warningBanner');
+        if (localStorage.getItem('pantryWarningDismissed') === '1') {
+            warningBanner.style.display = 'none';
+        }
+        document.getElementById('warningClose').addEventListener('click', () => {
+            warningBanner.style.display = 'none';
+            localStorage.setItem('pantryWarningDismissed', '1');
+        });
+
+        /* ---------- Modals ---------- */
+        function openModal(id) { document.getElementById(id).classList.add('open'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+        document.getElementById('helpBtn').addEventListener('click', () => openModal('helpModal'));
+        document.getElementById('termsBtn').addEventListener('click', () => openModal('termsModal'));
+        document.querySelectorAll('.modal-close').forEach(btn => {
+            btn.addEventListener('click', () => closeModal(btn.getAttribute('data-close')));
+        });
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.classList.remove('open');
+            });
+        });
+
+        /* ---------- Ingredients ---------- */
+        const ingredients = [];
+        const ingInput = document.getElementById('ingInput');
+        const addIngBtn = document.getElementById('addIngBtn');
+        const ingList = document.getElementById('ingList');
+
+        function addIngredient() {
+            const val = ingInput.value.trim();
+            if (val && !ingredients.includes(val)) {
+                ingredients.push(val);
+                renderIngredients();
+                ingInput.value = '';
+            }
+        }
+        addIngBtn.addEventListener('click', addIngredient);
+        ingInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addIngredient(); });
+
+        function removeIngredient(index) {
+            ingredients.splice(index, 1);
+            renderIngredients();
+        }
+
+        function renderIngredients() {
+            ingList.innerHTML = ingredients.map((ing, i) => `
+                <div class="ing-tag">${ing} <span onclick="removeIngredient(${i})">&times;</span></div>
+            `).join('');
+        }
+
+        /* ---------- Dietary / religious restrictions ---------- */
+        const restrictions = [];
+        const restrictInput = document.getElementById('restrictInput');
+        const addRestrictBtn = document.getElementById('addRestrictBtn');
+        const restrictList = document.getElementById('restrictList');
+
+        function addRestriction() {
+            const val = restrictInput.value.trim();
+            if (val && !restrictions.includes(val.toLowerCase())) {
+                restrictions.push(val.toLowerCase());
+                renderRestrictions();
+                restrictInput.value = '';
+            }
+        }
+        addRestrictBtn.addEventListener('click', addRestriction);
+        restrictInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addRestriction(); });
+
+        function removeRestriction(index) {
+            restrictions.splice(index, 1);
+            renderRestrictions();
+        }
+
+        function renderRestrictions() {
+            restrictList.innerHTML = restrictions.map((r, i) => `
+                <div class="restrict-tag">${r} <span onclick="removeRestriction(${i})">&times;</span></div>
+            `).join('');
+        }
+
+        /* ---------- Chips ---------- */
+        function toggleChip(el) { el.classList.toggle('active'); }
+
+        /* ---------- Simple deterministic "nutrition" generator ---------- */
+        function hashSeed(str) {
+            let h = 0;
+            for (let i = 0; i < str.length; i++) { h = (h * 31 + str.charCodeAt(i)) >>> 0; }
+            return h;
+        }
+
+        function estimateNutrition(name, restrictionsList) {
+            const seed = hashSeed(name);
+            const isVegan = restrictionsList.some(r => r.includes('vegan'));
+            const isHighProtein = restrictionsList.some(r => r.includes('protein'));
+
+            let calories = 380 + (seed % 260);
+            let protein = 18 + (seed % 22);
+            let carbs = 30 + ((seed >> 3) % 40);
+            let fat = 10 + ((seed >> 5) % 18);
+
+            if (isVegan) { protein = Math.max(10, protein - 6); carbs += 8; }
+            if (isHighProtein) { protein += 12; calories += 40; }
+
+            return { calories, protein, carbs, fat };
+        }
+
+        /* ---------- Restriction matching, pick a compliant demo recipe ---------- */
+        function pickRecipeForRestrictions(restrictionsList, ingredientsList) {
+            const r = restrictionsList.join(' ');
+            if (r.includes('vegan')) return 'Vegan Chickpea & Spinach Skillet';
+            if (r.includes('halal')) return 'Halal Spiced Chicken Rice';
+            if (r.includes('kosher')) return 'Kosher Vegetable & Matzo Ball Soup';
+            if (r.includes('vegetarian')) return 'Vegetarian Black Bean Rice Bowl';
+            if (r.includes('gluten')) return 'Gluten-Free Herb Chicken & Potatoes';
+            if (r.includes('dairy')) return 'Dairy-Free Coconut Curry Vegetables';
+            if (r.includes('nut')) return 'Nut-Free Veggie Fried Rice';
+            if (r.includes('pescatarian')) return 'Pescatarian Garlic Butter Shrimp & Rice';
+            if (ingredientsList.length > 0) {
+                return `${ingredientsList[0].charAt(0).toUpperCase() + ingredientsList[0].slice(1)} & Herb Stir-Fry`;
+            }
+            return 'Pantry Specialty Bowl';
+        }
+
+        /* ---------- Rating handling (re-bound after every recipe render) ---------- */
+        function handleRating(rating) {
+            document.querySelectorAll('.rate-btn').forEach(btn => btn.classList.remove('active'));
+            const chosen = document.querySelector(`.rate-btn[data-rating="${rating}"]`);
+            if (chosen) chosen.classList.add('active');
+
+            const feedbackBox = document.getElementById('ratingFeedback');
+            const thanks = document.getElementById('ratingThanks');
+            if (feedbackBox) {
+                feedbackBox.style.display = 'block';
+                const label = document.getElementById('feedbackText');
+                if (label) {
+                    label.placeholder = rating === 'up'
+                        ? 'What did you like about this one?'
+                        : 'What would you change or swap out?';
+                }
+            }
+            if (thanks) thanks.style.display = 'none';
+        }
+
+        function bindRatingAndRollAgain() {
+            const submitBtn = document.getElementById('submitFeedbackBtn');
+            if (submitBtn) {
+                submitBtn.addEventListener('click', () => {
+                    const feedbackBox = document.getElementById('ratingFeedback');
+                    const thanks = document.getElementById('ratingThanks');
+                    if (feedbackBox) feedbackBox.style.display = 'none';
+                    if (thanks) thanks.style.display = 'block';
+                });
+            }
+            const rollAgainBtn = document.getElementById('rollAgainBtn');
+            if (rollAgainBtn) {
+                rollAgainBtn.addEventListener('click', spinRecipe);
+            }
+        }
+
+        /* ---------- Spin ---------- */
+        function spinRecipe() {
+            const display = document.getElementById('displayPanel');
+            const cuisineRaw = document.getElementById('cuisineInput').value.trim();
+            const activeChips = Array.from(document.querySelectorAll('.chip.active')).map(c => c.innerText);
+
+            display.innerHTML = `
+                <div class="placeholder-icon">⏳</div>
+                <h2>Spinning the wheel...</h2>
+            `;
+
+            setTimeout(() => {
+                const recipeName = pickRecipeForRestrictions(restrictions, ingredients);
+                const cuisineTag = cuisineRaw !== '' ? cuisineRaw : 'Fusion';
+                const nutrition = estimateNutrition(recipeName, restrictions);
+
+                const timeOptions = ['15-20 mins', '20-30 mins', '30-45 mins'];
+                const prepTime = activeChips.includes('quick') ? '15-20 mins' : timeOptions[hashSeed(recipeName + Date.now()) % timeOptions.length];
+
+                display.className = "panel display-panel";
+                display.style.justifyContent = "flex-start";
+                display.style.alignItems = "flex-start";
+
+                display.innerHTML = `
+                    <div class="recipe-content">
+                        <div class="recipe-header">
+                            <div class="recipe-header-main">
+                                <h3>${recipeName}</h3>
+                                <div class="recipe-meta">
+                                    <span class="meta-badge">🌐 ${cuisineTag}</span>
+                                    ${activeChips.map(tag => `<span class="meta-badge">🏷️ ${tag}</span>`).join('')}
+                                    ${restrictions.map(tag => `<span class="meta-badge">✅ ${tag}</span>`).join('')}
+                                    <span class="meta-badge">⏱️ ${prepTime}</span>
+                                    <span class="meta-badge">🎓 Dorm-friendly</span>
+                                </div>
+                            </div>
+                            <button class="btn-roll-again" id="rollAgainBtn">🔄 Roll again</button>
+                        </div>
+                        <div class="recipe-body">
+                            <h4>Ingredients Used:</h4>
+                            <ul>
+                                ${ingredients.length > 0 ? ingredients.map(i => `<li>${i}</li>`).join('') : '<li>Pantry essentials (rice, oil, spices, garlic)</li>'}
+                                <li>Salt, pepper, cooking oil</li>
+                                <li>Aromatic spices</li>
+                            </ul>
+                            <h4>Instructions:</h4>
+                            <ol>
+                                <li>Prep all ingredients: chop, dice, and season.</li>
+                                <li>Heat oil in a single pan over medium-high heat, fewer dishes to wash.</li>
+                                <li>Sauté aromatics until fragrant, then add the main ingredients.</li>
+                                <li>Simmer or stir-fry until cooked through and serve warm.</li>
+                            </ol>
+                            <h4>Nutrition Facts (estimated, per serving):</h4>
+                            <div class="nutrition-box">
+                                <div><span class="num">${nutrition.calories}</span><span class="lbl">Calories</span></div>
+                                <div><span class="num">${nutrition.protein}g</span><span class="lbl">Protein</span></div>
+                                <div><span class="num">${nutrition.carbs}g</span><span class="lbl">Carbs</span></div>
+                                <div><span class="num">${nutrition.fat}g</span><span class="lbl">Fat</span></div>
+                            </div>
+                            <p class="inline-note">⚠️ AI-generated recipe and estimates, recheck against your own dietary or religious requirements and any allergies before eating.</p>
+
+                            <div class="rating-box">
+                                <p class="rating-question">Did you like this recipe?</p>
+                                <div class="rating-buttons">
+                                    <button class="rate-btn" data-rating="up" onclick="handleRating('up')">👍 Yes</button>
+                                    <button class="rate-btn" data-rating="down" onclick="handleRating('down')">👎 Not really</button>
+                                </div>
+                                <div class="rating-feedback" id="ratingFeedback" style="display:none;">
+                                    <textarea id="feedbackText" placeholder="What did you like, or what would you change?"></textarea>
+                                    <button class="btn-feedback-submit" id="submitFeedbackBtn">Send feedback</button>
+                                </div>
+                                <p class="rating-thanks" id="ratingThanks" style="display:none;">Thanks for the feedback! 🙌</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                bindRatingAndRollAgain();
+            }, 800);
+        }
+
+        document.getElementById('spinBtn').addEventListener('click', spinRecipe);
+
+        /* ---------- Nearby food search (OpenStreetMap, no API key needed) ---------- */
+        document.getElementById('findNearbyBtn').addEventListener('click', () => {
+            const display = document.getElementById('displayPanel');
+            display.className = "panel display-panel";
+            display.style.justifyContent = "flex-start";
+            display.style.alignItems = "flex-start";
+
+            display.innerHTML = `
+                <div class="placeholder-icon">📍</div>
+                <h2>Locating nearby food spots...</h2>
+                <p class="sub">Requesting browser location for OpenStreetMap search.</p>
+            `;
+
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    const lat = pos.coords.latitude;
+                    const lon = pos.coords.longitude;
+
+                    const query = `[out:json];node(around:2000,${lat},${lon})[amenity=restaurant];out 5;`;
+                    const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+
+                    fetch(url)
+                        .then(res => res.json())
+                        .then(data => {
+                            const elements = data.elements || [];
+                            let placesHtml = '';
+
+                            if (elements.length > 0) {
+                                placesHtml = elements.map(place => `
+                                    <div class="place-card">
+                                        <div>
+                                            <strong>${place.tags.name || 'Local Restaurant'}</strong>
+                                            <div style="font-size: 12px; color: var(--text-muted);">${place.tags.cuisine || 'Various Cuisines'}</div>
+                                        </div>
+                                        <a href="https://www.openstreetmap.org/node/${place.id}" target="_blank" style="color: var(--accent-orange); font-size: 12px; font-weight: bold;">View Map</a>
+                                    </div>
+                                `).join('');
+                            } else {
+                                placesHtml = `
+                                    <div class="place-card">
+                                        <div>
+                                            <strong>Spice Route Bistro</strong>
+                                            <div style="font-size: 12px; color: var(--text-muted);">Indian Cuisine</div>
+                                        </div>
+                                        <span>0.4 mi</span>
+                                    </div>
+                                    <div class="place-card">
+                                        <div>
+                                            <strong>Halal Corner Market</strong>
+                                            <div style="font-size: 12px; color: var(--text-muted);">Halal Mediterranean</div>
+                                        </div>
+                                        <span>0.8 mi</span>
+                                    </div>
+                                `;
+                            }
+
+                            display.innerHTML = `
+                                <div class="nearby-list">
+                                    <h3 style="margin-top:0;">📍 Nearby Food (OpenStreetMap)</h3>
+                                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Found using your exact GPS coordinates, no Google Maps key needed.</p>
+                                    ${placesHtml}
+                                </div>
+                            `;
+                        })
+                        .catch(() => {
+                            display.innerHTML = `<p>Unable to fetch map data. Check your internet connection.</p>`;
+                        });
+                }, () => {
+                    alert("Location access denied or unavailable.");
+                });
+            } else {
+                alert("Geolocation is not supported by your browser.");
+            }
+        });
+    </script>
+</body>
+</html>
